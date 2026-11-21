@@ -72,6 +72,8 @@ GETAL_WOORDEN = {
 
 
 VULWOORDEN = {"sport", "sports", "tv", "channel", "network", "the", "television"}
+# Woorden die je lijst mag MISSEN maar niet extra mag hebben ("Sky Sports News" is niet "Sky News")
+EXTRA_IN_LIJST = {"tv", "channel", "network", "the", "television"}
 
 
 def zoek_ruim(land, sleutel, ruim_index):
@@ -84,9 +86,18 @@ def zoek_ruim(land, sleutel, ruim_index):
     for g, key in ruim_index.get(land, []):
         if {w for w in g if w.isdigit()} != cijfers:
             continue
-        if (p <= g and g - p <= VULWOORDEN) or (g <= p and p - g <= VULWOORDEN and g - VULWOORDEN):
+        if (p <= g and g - p <= VULWOORDEN) or (g <= p and p - g <= EXTRA_IN_LIJST and g - VULWOORDEN):
             gevonden.add(key)
     return gevonden.pop() if len(gevonden) == 1 else None
+
+
+def zoek(land, sleutel, index, ruim_index):
+    doel = index.get((land, sleutel)) or zoek_ruim(land, sleutel, ruim_index)
+    woorden = sleutel.split()
+    if not doel and "1" in woorden:  # "ESPN 1" heet in de gids soms gewoon "ESPN"
+        zonder = " ".join(w for w in woorden if w != "1")
+        doel = index.get((land, zonder)) or zoek_ruim(land, zonder, ruim_index)
+    return doel
 
 
 def log(msg):
@@ -131,6 +142,8 @@ def land_uit_groep(groep):
 def normaliseer(naam):
     """Maak van een zendernaam een vergelijkbare sleutel."""
     t = ascii_vorm(naam).lower()
+    t = re.sub(r"\((?:[^)]*\b(?:live|match|event|backup|only|ppv)\b[^)]*)\)", " ", t)
+    t = re.sub(r"\b\d+\s*fps\b", " ", t)
     t = t.replace("&", " and ").replace("+1", " plus1 ").replace("+ 1", " plus1 ")
     t = re.sub(r"[^a-z0-9]+", " ", t)
     woorden = []
@@ -363,7 +376,7 @@ def main():
                 niet_gekoppeld.append((z, land, f"koppeling '{hand}' bestaat niet in de gidsen"))
                 continue
         elif land in landen:
-            doel = index.get((land, sleutel)) or zoek_ruim(land, sleutel, ruim_index)
+            doel = zoek(land, sleutel, index, ruim_index)
         else:
             continue  # land niet in bronnen: laat aanbieder-gids staan
         if not doel:
@@ -379,7 +392,7 @@ def main():
         koppeling[z["id"]] = doel
         gekoppeld.append((z, doel))
     controle = re.compile(os.environ.get(
-        "CONTROLE", r"ziggo|espn|viaplay|sky ?sports|tnt ?sports|dazn"), re.I)
+        "CONTROLE", r"^\W*(nl|uk|gb)\b.*(ziggo|espn|viaplay|sky|tnt|dazn|bbc|itv|premier|eurosport)"), re.I)
     regels = [f"    ✓ {z['naam']}  →  {gids_info[d]['naam']} ({d[1]})" for z, d in gekoppeld
               if controle.search(z["naam"])]
     regels += [f"    ✗ {z['naam']}  [{land or '?'}]" for z, land, _ in niet_gekoppeld
@@ -389,7 +402,7 @@ def main():
                if controle.search(z["naam"])]
     if regels:
         log("  Controle sportzenders:")
-        for r in sorted(set(regels))[:300]:
+        for r in sorted(set(regels))[:1500]:
             log(r)
     log(f"  gekoppeld: {len(gekoppeld)} | niet gevonden: {len(niet_gekoppeld)} | "
         f"zonder tvg-id: {len(zonder_id)} | dubbele code: {len(conflicten)}")
