@@ -1,0 +1,8 @@
+# Handmatige koppelingen voor zenders die niet vanzelf gevonden worden.
+# Kijk in rapport.html bij "Niet gevonden": daar staan suggesties met een code.
+#
+# Per regel:  zendernaam precies zoals in je lijst = code uit de gids
+#
+# Voorbeelden (haal de # weg om te gebruiken, en pas aan naar wat in je rapport staat):
+# NL: Ziggo Sport 1 HD = Ziggo.Sport.nl
+# UK: Sky Sports Main Event UHD = Sky.Sports.Main.Event.HD.uk

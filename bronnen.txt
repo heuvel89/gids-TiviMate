@@ -1,0 +1,31 @@
+# Openbare gidsen die gebruikt worden om je gids te repareren (van epgshare01.online).
+# Per regel: landcode, spatie, link.
+# Alleen zenders uit je lijst met dat land (bijv. "NL:", "UK:", "DE |") worden gerepareerd.
+# Alle andere zenders houden de gids van je aanbieder.
+# Bovenste regel wint als een zender in meerdere gidsen staat.
+# Een land niet nodig? Zet er een # voor, dan gaat het sneller.
+
+nl https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz
+uk https://epgshare01.online/epgshare01/epg_ripper_UK1.xml.gz
+ie https://epgshare01.online/epgshare01/epg_ripper_IE1.xml.gz
+de https://epgshare01.online/epgshare01/epg_ripper_DE1.xml.gz
+fr https://epgshare01.online/epgshare01/epg_ripper_FR1.xml.gz
+es https://epgshare01.online/epgshare01/epg_ripper_ES1.xml.gz
+it https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz
+pt https://epgshare01.online/epgshare01/epg_ripper_PT1.xml.gz
+pl https://epgshare01.online/epgshare01/epg_ripper_PL1.xml.gz
+ro https://epgshare01.online/epgshare01/epg_ripper_RO1.xml.gz
+tr https://epgshare01.online/epgshare01/epg_ripper_TR1.xml.gz
+us https://epgshare01.online/epgshare01/epg_ripper_US2.xml.gz
+us https://epgshare01.online/epgshare01/epg_ripper_US_SPORTS1.xml.gz
+ca https://epgshare01.online/epgshare01/epg_ripper_CA2.xml.gz
+mx https://epgshare01.online/epgshare01/epg_ripper_MX1.xml.gz
+br https://epgshare01.online/epgshare01/epg_ripper_BR1.xml.gz
+au https://epgshare01.online/epgshare01/epg_ripper_AU1.xml.gz
+nz https://epgshare01.online/epgshare01/epg_ripper_NZ1.xml.gz
+in https://epgshare01.online/epgshare01/epg_ripper_IN1.xml.gz
+za https://epgshare01.online/epgshare01/epg_ripper_ZA1.xml.gz
+ng https://epgshare01.online/epgshare01/epg_ripper_NG1.xml.gz
+ke https://epgshare01.online/epgshare01/epg_ripper_KE1.xml.gz
+ar https://epgshare01.online/epgshare01/epg_ripper_AE1.xml.gz
+ar https://epgshare01.online/epgshare01/epg_ripper_ALJAZEERA1.xml.gz

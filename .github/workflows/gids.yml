@@ -1,0 +1,41 @@
+name: Gids repareren
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # elke nacht rond 04:17 (Nederlandse wintertijd)
+  workflow_dispatch:        # knop "Run workflow" om meteen te draaien
+  push:
+    branches: [main]
+    paths: ["bronnen.txt", "koppelingen.txt", "epg_fix.py"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: gids
+  cancel-in-progress: true
+
+jobs:
+  bouwen:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gids maken
+        env:
+          M3U_URL: ${{ secrets.M3U_URL }}
+          EPG_URL: ${{ secrets.EPG_URL }}
+          AANBIEDER_GIDS: "ja"
+        run: python3 epg_fix.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
