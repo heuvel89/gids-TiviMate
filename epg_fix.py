@@ -36,7 +36,7 @@ from datetime import datetime, timezone
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 UITVOER = os.environ.get("UITVOER_MAP", os.path.join(HIER, "site"))
-USER_AGENT = os.environ.get("USER_AGENT", "VLC/3.0.20 LibVLC/3.0.20")
+USER_AGENT = os.environ.get("USER_AGENT", "okhttp/4.12.0")
 
 # ---------------------------------------------------------------- landen
 
