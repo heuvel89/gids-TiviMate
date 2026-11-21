@@ -71,6 +71,24 @@ GETAL_WOORDEN = {
 }
 
 
+VULWOORDEN = {"sport", "sports", "tv", "channel", "network", "the", "television"}
+
+
+def zoek_ruim(land, sleutel, ruim_index):
+    """Ruimere match: zelfde woorden en nummers, alleen vulwoorden verschillen."""
+    p = set(sleutel.split())
+    if not p:
+        return None
+    cijfers = {w for w in p if w.isdigit()}
+    gevonden = set()
+    for g, key in ruim_index.get(land, []):
+        if {w for w in g if w.isdigit()} != cijfers:
+            continue
+        if (p <= g and g - p <= VULWOORDEN) or (g <= p and p - g <= VULWOORDEN and g - VULWOORDEN):
+            gevonden.add(key)
+    return gevonden.pop() if len(gevonden) == 1 else None
+
+
 def log(msg):
     print(msg, flush=True)
 
@@ -302,6 +320,7 @@ def main():
     index = {}
     gids_info = {}          # (bron, id) -> {naam, icon, land}
     id_index = {}           # id (lowercase) -> (bron, id)
+    ruim_index = defaultdict(list)
     for i, land, p in bron_paden:
         try:
             for el in iter_elementen(p, "channel"):
@@ -322,6 +341,7 @@ def main():
                 for s in [id_sleutel] + [normaliseer(splits_land(n)[1]) for n in namen]:
                     if s:
                         index.setdefault((eig_land, s), key)
+                        ruim_index[eig_land].append((frozenset(s.split()), key))
         except ET.ParseError:
             log(f"  ✗ gids {i + 1} is beschadigd, overgeslagen")
     log(f"  {len(gids_info)} gidszenders beschikbaar")
@@ -343,7 +363,7 @@ def main():
                 niet_gekoppeld.append((z, land, f"koppeling '{hand}' bestaat niet in de gidsen"))
                 continue
         elif land in landen:
-            doel = index.get((land, sleutel))
+            doel = index.get((land, sleutel)) or zoek_ruim(land, sleutel, ruim_index)
         else:
             continue  # land niet in bronnen: laat aanbieder-gids staan
         if not doel:
@@ -358,6 +378,19 @@ def main():
             continue
         koppeling[z["id"]] = doel
         gekoppeld.append((z, doel))
+    controle = re.compile(os.environ.get(
+        "CONTROLE", r"ziggo|espn|viaplay|sky ?sports|tnt ?sports|dazn"), re.I)
+    regels = [f"    ✓ {z['naam']}  →  {gids_info[d]['naam']} ({d[1]})" for z, d in gekoppeld
+              if controle.search(z["naam"])]
+    regels += [f"    ✗ {z['naam']}  [{land or '?'}]" for z, land, _ in niet_gekoppeld
+               if controle.search(z["naam"])]
+    regels += [f"    ⚠ {z['naam']}  (geen tvg-id)" for z, _ in zonder_id if controle.search(z["naam"])]
+    regels += [f"    ⚠ {z['naam']}  (dubbele code {z['id']})" for z, _, _ in conflicten
+               if controle.search(z["naam"])]
+    if regels:
+        log("  Controle sportzenders:")
+        for r in sorted(set(regels))[:300]:
+            log(r)
     log(f"  gekoppeld: {len(gekoppeld)} | niet gevonden: {len(niet_gekoppeld)} | "
         f"zonder tvg-id: {len(zonder_id)} | dubbele code: {len(conflicten)}")
 
