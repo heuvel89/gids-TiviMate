@@ -154,6 +154,11 @@ def download(url, doel, naam, pogingen=3):
             return True
         except urllib.error.HTTPError as e:
             log(f"  ✗ {naam}: server gaf foutcode {e.code} (poging {poging})")
+        except urllib.error.URLError as e:
+            reden = getattr(e, "reason", None)
+            soort = type(reden).__name__ if reden is not None else "onbekend"
+            nr = getattr(reden, "errno", None)
+            log(f"  ✗ {naam}: verbinding mislukt ({soort}, code {nr}) (poging {poging})")
         except Exception as e:  # noqa: BLE001
             log(f"  ✗ {naam}: {type(e).__name__} (poging {poging})")
         time.sleep(5 * poging)
@@ -259,6 +264,9 @@ def main():
         log("FOUT: geheim M3U_URL ontbreekt. Zie stap 3 in README.")
         sys.exit(1)
     verberg(m3u_url)
+    log("Link-controle: begint met http(s):// = "
+        + ("ja" if re.match(r"^https?://", m3u_url) else "NEE (fout!)")
+        + ", bevat spaties = " + ("JA (fout!)" if re.search(r"\s", m3u_url) else "nee"))
 
     tmp = tempfile.mkdtemp()
     os.makedirs(UITVOER, exist_ok=True)
