@@ -17,6 +17,7 @@ Alleen standaard-Python, niets te installeren.
 """
 
 import difflib
+import json
 import gzip
 import html
 import os
@@ -274,10 +275,15 @@ def main():
     # 1. Playlist
     log("1. Zenderlijst ophalen")
     pl_pad = os.path.join(tmp, "playlist.m3u")
-    if not download(m3u_url, pl_pad, "zenderlijst"):
+    zenders, kop_epg = [], None
+    if download(m3u_url, pl_pad, "zenderlijst (M3U)"):
+        zenders, kop_epg = lees_playlist(pl_pad)
+    if not zenders:
+        log("  M3U leverde niets op, probeer Xtream-methode")
+        zenders = xtream_zenders(m3u_url, tmp)
+    if not zenders:
         log("FOUT: zenderlijst kon niet worden opgehaald. Klopt je link nog?")
         sys.exit(1)
-    zenders, kop_epg = lees_playlist(pl_pad)
     zenders = [z for z in zenders if not is_scheiding(z["naam"])]
     log(f"  {len(zenders)} live zenders gevonden")
 
@@ -445,6 +451,42 @@ def main():
                     index, len(zenders), aantal_prog, aanbieder_pad is not None)
     log("Klaar ✓")
     shutil.rmtree(tmp, ignore_errors=True)
+
+
+def xtream_zenders(m3u_url, tmp):
+    """Zenderlijst via player_api.php (als get.php geblokkeerd is)."""
+    u = urllib.parse.urlparse(m3u_url)
+    q = urllib.parse.parse_qs(u.query)
+    if "username" not in q or "password" not in q:
+        return []
+    pad = re.sub(r"[^/]*$", "player_api.php", u.path or "/", count=1)
+
+    def api(actie):
+        query = urllib.parse.urlencode({"username": q["username"][0],
+                                        "password": q["password"][0], "action": actie})
+        url = urllib.parse.urlunparse((u.scheme, u.netloc, pad, "", query, ""))
+        verberg(url)
+        doel = os.path.join(tmp, actie + ".json")
+        if not download(url, doel, f"zenderlijst ({actie})"):
+            return []
+        try:
+            with open(doel, encoding="utf-8", errors="replace") as f:
+                data = json.load(f)
+            return data if isinstance(data, list) else []
+        except ValueError:
+            log(f"  ✗ {actie}: antwoord was geen geldige lijst")
+            return []
+
+    cats = {str(c.get("category_id")): c.get("category_name", "") for c in api("get_live_categories")}
+    zenders = []
+    for st in api("get_live_streams"):
+        zenders.append({
+            "id": str(st.get("epg_channel_id") or "").strip(),
+            "naam": str(st.get("name") or "").strip(),
+            "groep": cats.get(str(st.get("category_id")), ""),
+            "logo": str(st.get("stream_icon") or "").strip(),
+        })
+    return zenders
 
 
 def afgeleide_epg_url(m3u_url):
